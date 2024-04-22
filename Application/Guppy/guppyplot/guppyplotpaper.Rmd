@@ -1,0 +1,369 @@
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+library(scales)
+library(gggrid)
+colorManual <- c("#377EB8", "#FF7F00", "#984EA3" ,"#4DAF4A", "#F781BF", "#A65628" )
+
+setwd("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy")
+source("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/leg.R")
+# setwd("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy")
+load("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/guppylc.RData")
+
+#load("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/msiguppylc.rda")
+space<-2 ######################
+
+load("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/URG.RData")
+```
+
+```{r}
+res <- res_guppy
+
+exact <- res[[2]]
+
+exactdf <- exact[[2]]
+
+n <- dim(guppylarge)[[1]]
+
+#UR_G <- graph_stats_guppy(guppylarge,1,n)
+#UR_G <- UR_G$UR_exact
+
+UR_G <- UR_G$UR_exact
+rho_hat_GG <- sum(guppylarge)/(n*(n-1))
+rho_hat_GG_UR_G <- UR_G*c(rho_hat_GG^(-2),rho_hat_GG^(-3),rho_hat_GG^(-3),rho_hat_GG^(-4))
+sqrtbrho_hat_GG_UR_G <- sqrt(618)*rho_hat_GG_UR_G
+
+smallNetMoment <-  exact[[1]]
+
+smallNetMoment <- smallNetMoment - sqrtbrho_hat_GG_UR_G
+
+tau <- sqrt(1 - (618/16485))
+#tau <- 1
+smallNetMoment  <-  smallNetMoment*tau 
+names(smallNetMoment) <- c("twoStar","triangle","threeStar","square")
+
+
+
+
+### plot
+
+
+# setwd("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/plot")
+as <- 50
+bs <- 25
+cs <- 1.5
+mytheme<-  theme_bw() +
+  theme(
+    text = element_text(size = as),
+    #panel.grid=element_blank(),
+    legend.position = "none",
+    plot.title = element_text(size = bs),
+    axis.text.x = element_text(size = bs),  # Adjust the size of x-axis labels
+    axis.text.y = element_text(size = bs)   # Adjust the size of y-axis labels
+  ) 
+  
+mytheme2<-mytheme+theme(panel.grid=element_blank())
+
+
+
+v_stats <-  smallNetMoment[1]
+tri_stats <-  smallNetMoment[2]
+tstar_stats <-  smallNetMoment[3]
+square_stats <-  smallNetMoment[4]
+
+exadf <- as.data.frame(exact[[2]][1:2000,])
+exadf <- sweep(exadf,2,sqrtbrho_hat_GG_UR_G)
+
+df <- data.frame(x = exadf$twoStar, y = exadf$triangle)
+
+p11 <-ggplot(exadf) + ##p11 v_tri
+      geom_point(aes(x = twoStar, y = triangle), alpha=0.1, colour=colorManual[1]) +   
+      stat_density2d(aes(x = twoStar, y = triangle), colour=colorManual[2]) + 
+      geom_hline(yintercept = tri_stats, linetype = 'dashed', color = 'black', linewidth = 1) +
+      geom_vline(xintercept = v_stats, linetype = 'dashed', color = 'black', linewidth = 1) +  
+      geom_point(x = v_stats, y = tri_stats, colour=colorManual[3], size = 2) +
+      labs(x='',y='')+
+      mytheme+
+	  grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X1000',gp=gpar(cex=cs )))+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-50,0,50,100),labels =\(x) sprintf('%4.1f',x/100) ) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(-2000,0,2000,4000),labels =\(x) sprintf('%4.1f',x/1000) )
+	  
+	  
+ggplotGrob(p11)->p11g
+p11g$grobs[[12]]<-v1
+p11g$grobs[[13]]<-v2
+
+p11g$heights[10]<-unit(space,'cm')
+p11g$widths[6]<-unit(space,'cm')
+
+
+pdf('out_v_tri.pdf',width=7.7,height=6)
+grid.draw(p11g)
+dev.off()
+
+
+# p12<-ggplot(exadf) + ##p11 v_3
+#       geom_point(aes(x = twoStar, y = threeStar),alpha=0.1,colour=colorManual[1]) +
+#       stat_density2d(aes(x = twoStar, y = threeStar), colour=colorManual[2]) + 
+#       geom_hline(yintercept = tstar_stats, linetype = 'dashed', color = 'black', size = 1) +
+#       geom_vline(xintercept = v_stats, linetype = 'dashed', color = 'black', size = 1) +  
+#       geom_point(x = v_stats, y = tstar_stats, color = colorManual[3], size = 2) +
+#       labs(x = "two star", y = "three star") +
+#       mytheme+
+# 	  grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+# 	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+# 	  coord_cartesian(clip='off')+
+#       scale_x_continuous(breaks=c(-50, 0, 50,100),labels =\(x) sprintf('%4.1f',x/100) ) +  # Use scientific notation for x-axis
+#       scale_y_continuous(breaks=c(-300,0,300,600),labels =\(x) sprintf('%4.1f',x/100) )
+# 	  
+
+p12<-ggplot(exadf) + 
+     geom_point(aes(x = twoStar, y = threeStar),alpha=0.1, colour=colorManual[1]) +   
+     stat_density2d(aes(x = twoStar, y = threeStar), colour=colorManual[2]) +  
+     geom_hline(yintercept = tstar_stats, linetype = 'dashed', color = 'black', size = 0.6) +
+     geom_vline(xintercept = v_stats, linetype = 'dashed', color = 'black', size = 0.6) +  
+    # geom_hline(yintercept = tstar_stats00, linetype = 'dashed', color = 'black', size = 1) +
+    # geom_vline(xintercept = v_stats00, linetype = 'dashed', color = 'black', size = 1) +  
+     geom_point(x = v_stats, y = tstar_stats, color = "#E41A1C", size = 3) +
+    # geom_point(x = v_stats00, y = tstar_stats00, color = 'red', size = 2)+
+      mytheme+
+	  # grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs)),size = bs )+
+	  # grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X1000',gp=gpar(cex=cs)),size = bs)+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-70,0, 70, 140)
+                         ,labels =c(-50,0, 50, 100)
+                         # ,labels =\(x) sprintf('%4.1f',x/100) 
+                         ) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(-300,0,300,600),labels =\(x) sprintf('%4.1f',x/100) )+
+      theme(axis.title.x = element_text(size = 30,hjust = 0.35,
+                                        margin = margin(t = 10, b = -5)
+                                        ),
+            axis.title.y = element_text(size = 30,hjust = 0.35,
+                                        margin = margin(t = 10, b = -5)
+                                        ),
+            axis.text.x = element_text(color = "black"),
+            axis.text.y = element_text(color = "black"),
+            aspect.ratio = 1,  ##这个让它变成正方形的方块
+            ggside.panel.border = element_blank(),
+            ggside.panel.grid = element_blank(),
+            ggside.panel.background = element_blank(),
+            ggside.axis.text = element_blank(),
+            ggside.axis.ticks = element_blank(),
+            ggside.panel.scale = .3
+        )+
+  xlab("2-star")+
+  ylab("3-star")+
+  geom_xsidedensity(aes(x = twoStar),
+                    ,color = colorManual[1]
+                    ,fill=colorManual[1],alpha = 0.65,size = 0.8) +
+  geom_ysidedensity(aes(y = threeStar),
+                    ,color = colorManual[1]
+                    ,fill=colorManual[1],alpha = 0.65,size = 0.8
+                    ) +
+  geom_xsidevline(xintercept = v_stats,linetype = 'dashed', color = 'black', size = 0.6) +
+  geom_ysidehline(yintercept = tstar_stats,linetype = 'dashed', color = 'black', size = 0.6) 
+	  
+  
+# ggplotGrob(p12)->p12g
+# p12g$grobs[[12]]<-v1
+# p12g$grobs[[13]]<-v3
+# 
+# p12g$heights[10]<-unit(space,'cm')
+# p12g$widths[6]<-unit(space,'cm')
+
+pdf('out_v_3.pdf',width=7.7,height=6)
+grid.draw(p12)
+dev.off()
+ 
+  
+
+p13<-ggplot(exadf) + ##tri_tstar
+     geom_point(aes(x = triangle, y = threeStar),alpha=0.1,colour=colorManual[1]) +
+     stat_density2d(aes(x = triangle, y = threeStar), colour=colorManual[2]) + 
+     geom_hline(yintercept =tstar_stats, linetype = 'dashed', color ='black',size = 1) +
+     geom_vline(xintercept = tri_stats, linetype = 'dashed', color ='black',size = 1) +  
+     geom_point(x = tri_stats, y=tstar_stats, color = colorManual[3],size = 2)+
+     labs(x = "triangle", y = "three star") +
+     mytheme+
+      grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X1000',gp=gpar(cex=cs )))+
+	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-2000,0,2000,4000),labels =\(x) sprintf('%4.1f',x/1000) ) +  # Use scientific notation for x-axis
+      scale_y_continuous(labels =\(x) sprintf('%4.1f',x/100) )
+
+ggplotGrob(p13)->p13g
+p13g$grobs[[12]]<-v2
+p13g$grobs[[13]]<-v3
+
+p13g$heights[10]<-unit(space,'cm')
+p13g$widths[6]<-unit(space,'cm')
+
+
+pdf('out_tri_tstar.pdf',width=7.7,height=6)
+grid.draw(p13g)
+dev.off()
+############
+```
+
+```{r}
+
+##### density
+# setwd("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/plot")
+res <- res_guppy
+exact <- res[[2]]
+
+exadf <- as.data.frame(exact[[2]])
+exadf <- sweep(exadf,2,sqrtbrho_hat_GG_UR_G)
+
+sum(exadf$threeStar <= tstar_stats)
+
+
+
+
+
+# Calculate the quantile of the specific value
+quantile_of_value <- (sum(exadf$threeStar <= tstar_stats)) / length(exadf$threeStar)
+#quantile_of_value <- quantile_of_value - 0.007
+
+# Plot the histogram with vertical lines and labels
+pd11<-ggplot(exadf, aes(x = threeStar)) +  ###threestar_mar.pdf
+      geom_histogram(bins = 30, fill = colorManual[1], color = "black") + # Adjust the number of bins as needed
+      geom_vline(aes(xintercept = tstar_stats), color = "red", linetype = "dashed") + 
+      mytheme2+
+      #labs(x = "three star", y = "density",title="quantile: 0.588")+
+      labs(x = "three star", y = "density",title=paste("percentile:", round(quantile_of_value,3)))+
+	  mytheme2+
+      grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X1000',gp=gpar(cex=cs )))+
+	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X1000',gp=gpar(cex=cs )))+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-300, 0, 300, 600),labels =\(x) sprintf('%4.1f',x/1000) ) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(0,500,1000),labels =\(x) sprintf('%4.1f',x/1000),expand=expansion(c(0,0.05)))
+
+
+ggplotGrob(pd11)->pd11g
+pd11g$grobs[[12]]<-v3
+pd11g$heights[10]<-unit(space,'cm')
+pd11g$widths[6]<-unit(space,'cm')
+
+
+pdf('out_threestar_mar.pdf',width=7.7,height=6)
+grid.draw(pd11g)
+dev.off()
+
+
+# Calculate the quantile of the specific value
+quantile_of_value <- sum(exadf$twoStar <= v_stats) / length(exadf$threeStar)
+
+# Your existing setup for plotting
+pd12<-ggplot(exadf, aes(x = twoStar)) +  ###twostar_mar.pdf
+       geom_histogram(bins = 20, fill = colorManual[1], alpha = 0.65, color = "black") + # Adjust the number of bins as needed
+       geom_vline(aes(xintercept = v_stats), color = "red", linetype = "dashed") + 
+       mytheme2+
+       #labs(x = "three star", y = "density",title="quantile: 0.333")+
+       labs(x = "three star", y = "density",title=paste("percentile:", round(quantile_of_value,3)))+
+	   mytheme2+
+      grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X1000',gp=gpar(cex=cs )))+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-80, -10, 60, 130 ),labels =\(x) sprintf('%4.1f',x/100) ) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(0,500,1000,1500),labels =\(x) sprintf('%4.1f',x/1000),expand=expansion(c(0,0.05)))
+
+
+ggplotGrob(pd12)->pd12g
+pd12g$grobs[[12]]<-v1
+
+pd12g$heights[10]<-unit(space,'cm')
+pd12g$widths[6]<-unit(space,'cm')
+
+
+pdf('out_twostar_mar.pdf',width=7.7,height=6)
+grid.draw(pd12g)
+dev.off()
+
+
+
+point <- c(v_stats, tstar_stats)
+a <- 0.95*v_stats
+b <- 1.05*v_stats
+df <- exadf[,c(1,3)]
+temp <- df[which((df$twoStar < a) & (df$twoStar > b)),]
+
+# Calculate the quantile of the specific value
+quantile_of_value <- sum(temp$threeStar<= tstar_stats) / length(temp$threeStar)
+
+
+# pd13<-ggplot(temp, aes(x = threeStar)) +  ###threeontwo_cond.pdf
+#       geom_histogram(bins = 12, fill = colorManual[1], color = "black") + # Adjust the number of bins as needed
+#       geom_vline(aes(xintercept = tstar_stats), color = "red", linetype = "dashed") + 
+# 	  labs(x = "three star", y = "density",title=paste("percentile:", round(quantile_of_value,3)))+
+#       mytheme2+
+#       grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs )))+
+# 	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X10',gp=gpar(cex=cs )))+
+# 	  coord_cartesian(clip='off')+
+#       scale_x_continuous(breaks = c(-260, -240, -220, -200), labels =\(x) sprintf('%4.1f',x/100)) +  # Use scientific notation for x-axis
+#       scale_y_continuous(breaks = c(0, 6, 12, 18), labels =\(x) sprintf('%4.1f',x/10),expand=expansion(c(0,0.05)))
+
+
+pd13<-ggplot(temp, aes(x = threeStar,y=..density..)) +
+  
+  geom_histogram(bins = 12, fill = colorManual[1],alpha=0.65, color = "black") + # Adjust the number of bins as needed
+  #geom_density(color = colorManual[2],size =0.75)+
+  # geom_density(fill = colorManual[1], color = "black",alpha=0.65)+
+  geom_vline(aes(xintercept = tstar_stats), color = "red", linetype = "dashed",size =3) + 
+	  
+  mytheme2+
+  labs(x = "3-star | 2-star",y = ""
+       ,title=paste("Percentile:", round(quantile_of_value,3)))+
+  theme(axis.title.x = element_text(size = 30,hjust = 0.5,
+                                    margin = margin(t = 10, b = -5)
+                                    )
+        # ,axis.text.y = element_blank()
+        # ,axis.ticks.y = element_blank()
+        )+
+  # theme(plot.title = element_text(hjust = 0.5))+
+#       grid_panel(textGrob(y=unit(-0.1,'lines'),x=1,just=c('right','top'),label='X100',gp=gpar(cex=cs)))+
+# 	  grid_panel(textGrob(y=1,x=unit(-0.1,'lines'),just=c('right','top'),label='X10',gp=gpar(cex=cs)))+
+	  coord_cartesian(clip='off')+
+      scale_x_continuous(breaks=c(-265, -240, -215, -190)
+                         # ,labels =\(x) sprintf('%4.1f',x/100)
+                         ,labels = c(-260, -240, -220, -200)
+                         ) +
+  scale_y_continuous( breaks = seq(0,0.03,0.01)
+                    ,limits= c(0,0.03)
+                    ,labels = c(0.0,0.1,0.2,0.3 )
+                   )
+  
+
+
+
+
+
+
+
+
+
+
+
+# zi<-segmentsGrob(y0=0.1,y1=0.9,x0=0.5,x1=0.5,gp=gpar(lwd=2))
+# tog<-gtable(width=unit.c(unit(1.6,'cm'),unit(1,'cm'),unit(1.6,'cm')),heights=unit(1.6,'cm'))
+# tog<-gtable_add_grob(tog,v3,l=1,t=1)
+# tog<-gtable_add_grob(tog,zi,l=2,t=1)
+# tog<-gtable_add_grob(tog,v1,l=3,t=1)
+# tog
+# 
+# 
+# ggplotGrob(pd13)->pd13g
+# pd13g$grobs[[12]]<-tog
+# 
+# pd13g$heights[10]<-unit(space,'cm')
+# pd13g$widths[6]<-unit(space,'cm')
+
+
+
+pdf('out_threeontwo_cond.pdf',width=7.7,height=6)
+grid.draw(pd13)
+dev.off()
+
+```

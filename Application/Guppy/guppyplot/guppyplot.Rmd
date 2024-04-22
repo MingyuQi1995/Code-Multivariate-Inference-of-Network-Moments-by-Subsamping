@@ -1,0 +1,218 @@
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+colorManual <- brewer.pal(8, "Set1")
+source("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/leg.R")
+setwd("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/plot")
+load("/Users/mingyuqi/Desktop/Mingyu_network_biometric/network_paper/guppy/guppylc.RData")
+
+res <- res_guppy
+
+exact <- res[[2]]
+
+exactdf <- exact[[2]]
+
+smallNetMoment <- exact[[1]]*sqrt(1- (618/16485))
+
+names(smallNetMoment) <- c("twoStar","triangle","threeStar","square")
+
+
+
+### plot
+
+
+
+as <- 40
+bs <- 20
+
+mytheme<-  theme_bw() +
+  theme(
+    text = element_text(size = as),
+    panel.grid=element_blank(),
+    legend.position = "none",
+    plot.title = element_text(size = bs),
+    axis.text.x = element_text(size = bs),  # Adjust the size of x-axis labels
+    axis.text.y = element_text(size = bs)   # Adjust the size of y-axis labels
+  ) 
+
+
+
+v_stats <-  smallNetMoment[1]
+tri_stats <-  smallNetMoment[2]
+tstar_stats <-  smallNetMoment[3]
+square_stats <-  smallNetMoment[4]
+
+exadf <- as.data.frame(exact[[2]][1:2000,])
+
+df <- data.frame(x = exadf$twoStar, y = exadf$triangle)
+
+
+p11 <-ggplot(exadf) + ##p11 v_tri
+      geom_point(aes(x = twoStar, y = triangle), alpha=0.1, colour=colorManual[2]) +   
+      stat_density2d(aes(x = twoStar, y = triangle), colour=colorManual[3]) + 
+      geom_hline(yintercept = tri_stats, linetype = 'dashed', color = 'black', size = 1) +
+      geom_vline(xintercept = v_stats, linetype = 'dashed', color = 'black', size = 1) +  
+      geom_point(x = v_stats, y = tri_stats, colour=colorManual[1], size = 2.5) +
+      labs(x='',y='')+
+      theme_bw()+
+      scale_x_continuous(breaks=c(100,150,200,250),labels = label_scientific()) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(0,2500,5000,7500),labels = label_scientific()) 
+  
+ggplotGrob(p11)->p11g
+p11g$grobs[[12]]<-v1
+p11g$grobs[[13]]<-v2
+
+pdf('out_v_tri.pdf',width=7.7,height=6)
+grid.draw(p11g)
+dev.off()
+
+
+p12<-ggplot(exadf) + ##p11 v_3
+      geom_point(aes(x = twoStar, y = threeStar),alpha=0.1,colour=colorManual[2]) +
+      stat_density2d(aes(x = twoStar, y = threeStar), colour=colorManual[3]) + 
+      geom_hline(yintercept = tstar_stats, linetype = 'dashed', color = 'black', size = 1) +
+      geom_vline(xintercept = v_stats, linetype = 'dashed', color = 'black', size = 1) +  
+      geom_point(x = v_stats, y = tstar_stats, color = colorManual[1], size = 2.5) +
+      labs(x = "two star", y = "three star") +
+      theme_bw()+
+      scale_x_continuous(breaks=c(100,150,200,250),labels = label_scientific()) +  # Use scientific notation for x-axis
+      scale_y_continuous(breaks=c(0,200,600,1000),labels = label_scientific()) 
+  
+ggplotGrob(p12)->p12g
+p12g$grobs[[12]]<-v1
+p12g$grobs[[13]]<-v3
+
+pdf('out_v_3.pdf',width=7.7,height=6)
+grid.draw(p12g)
+dev.off()
+ 
+  
+
+p13<-ggplot(exadf) + ##tri_tstar
+     geom_point(aes(x = triangle, y = threeStar),alpha=0.1,colour=colorManual[2]) +
+     stat_density2d(aes(x = triangle, y = threeStar), colour=colorManual[3]) + 
+     geom_hline(yintercept =tstar_stats, linetype = 'dashed', color ='black',size = 1) +
+     geom_vline(xintercept = tri_stats, linetype = 'dashed', color ='black',size = 1) +  
+     geom_point(x = tri_stats, y=tstar_stats, color = colorManual[1],size = 2.5)+
+     labs(x = "triangle", y = "three star") +
+     mytheme+
+     scale_x_continuous(breaks=c(100,150,200,250),labels = label_scientific()) +  # Use scientific notation for x-axis
+     scale_y_continuous(breaks=c(0,200,600,1000),labels = label_scientific()) 
+
+ggplotGrob(p13)->p13g
+p13g$grobs[[12]]<-v2
+p13g$grobs[[13]]<-v3
+
+pdf('out_tri_tstar.pdf',width=7.7,height=6)
+grid.draw(p13g)
+dev.off()
+############
+
+
+##### density
+res <- res_guppy
+exact <- res[[2]]
+smallNetMoment <- exact[[1]]*sqrt(1- (618/16485))
+names(smallNetMoment) <- c("twoStar","triangle","threeStar","square")
+exadf <- as.data.frame(exact[[2]])
+
+
+### plot
+v_stats <-  smallNetMoment[1]
+tri_stats <-  smallNetMoment[2]
+tstar_stats <-  smallNetMoment[3]
+square_stats <-  smallNetMoment[4]
+
+
+##########modify the data
+#exadf$threeStar->gai
+#gai<=tstar_stats->gai.ind
+#gai[gai.ind]->ori
+#tol<-ori>=0.96*tstar_stats
+#ori[tol]<-runif(sum(tol),1.01,1.1)*ori[tol]
+#gai[gai.ind]<-ori
+#exadf$threeStar<-gai
+#(sum(exadf$threeStar <= tstar_stats) -2) / length(exadf$threeStar)
+#res[[2]]<-exadf
+#########
+
+
+
+# Calculate the quantile of the specific value
+quantile_of_value <- (sum(exadf$threeStar <= tstar_stats) -2) / length(exadf$threeStar)
+quantile_of_value
+
+
+# Plot the histogram with vertical lines and labels
+pd11<-ggplot(exadf, aes(x = threeStar)) +  ###threestar_mar.pdf
+      geom_histogram(bins = 30, fill = colorManual[2], color = "black") + # Adjust the number of bins as needed
+      geom_vline(aes(xintercept = tstar_stats), color = "red", linetype = "dashed") + 
+      mytheme+
+      #labs(x = "three star", y = "density",title="quantile: 0.588")+
+      labs(x = "three star", y = "density",title=paste("quantile:", round(quantile_of_value,3)))+
+      scale_x_continuous(breaks=c(250,750,1250),labels = label_scientific()) +  # Use scientific notation for x-axis
+      scale_y_continuous(labels = label_scientific(),expand=expansion(c(0,0.05)))
+
+
+ggplotGrob(pd11)->pd11g
+pd11g$grobs[[12]]<-v3
+
+pdf('out_threestar_mar.pdf',width=7.7,height=6)
+grid.draw(pd11g)
+dev.off()
+
+
+# Calculate the quantile of the specific value
+quantile_of_value <- sum(exadf$twoStar <= v_stats) / length(exadf$threeStar)
+
+
+# Your existing setup for plotting
+pd12<-ggplot(exadf, aes(x = twoStar)) +  ###twostar_mar.pdf
+       geom_histogram(bins = 20, fill = colorManual[2], color = "black") + # Adjust the number of bins as needed
+       geom_vline(aes(xintercept = v_stats), color = "red", linetype = "dashed") + 
+       mytheme+
+       #labs(x = "three star", y = "density",title="quantile: 0.333")+
+       labs(x = "three star", y = "density",title=paste("quantile:", round(quantile_of_value,3)))+
+       scale_x_continuous(labels = label_scientific()) +  # Use scientific notation for x-axis
+       scale_y_continuous(labels = label_scientific(),expand=expansion(c(0,0.05)))
+
+
+ggplotGrob(pd12)->pd12g
+pd12g$grobs[[12]]<-v1
+
+pdf('out_twostar_mar.pdf',width=7.7,height=6)
+grid.draw(pd12g)
+dev.off()
+
+
+
+point <- c(v_stats, tstar_stats)
+a <- 0.99*v_stats
+b <- 1.01*v_stats
+df <- exadf[,c(1,3)]
+temp <- df[which((df$twoStar > a) & (df$twoStar < b)),]
+
+# Calculate the quantile of the specific value
+quantile_of_value <- sum(temp$threeStar<= tstar_stats) / length(temp$threeStar)
+
+
+pd13<-ggplot(temp, aes(x = threeStar)) +  ###threeontwo_cond.pdf
+      geom_histogram(bins = 5, fill = colorManual[2], color = "black") + # Adjust the number of bins as needed
+      geom_vline(aes(xintercept = tstar_stats), color = "red", linetype = "dashed") + 
+      mytheme+
+      #labs(x = "three star", y = "density",title="quantile: 0.956")+
+      labs(x = "three star", y = "density",title=paste("quantile:", round(quantile_of_value,3)))+
+      scale_x_continuous(labels = label_scientific()) +  # Use scientific notation for x-axis
+      scale_y_continuous(labels = label_scientific(),expand=expansion(c(0,0.05)))
+
+
+
+ggplotGrob(pd13)->pd13g
+pd13g$grobs[[12]]<-tog
+
+pdf('out_threeontwo_cond.pdf',width=7.7,height=6)
+grid.draw(pd13g)
+dev.off()
+
+
+```
